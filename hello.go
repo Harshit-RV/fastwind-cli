@@ -1,7 +1,9 @@
 package main
 
 import (
+	"strings"
 	"encoding/json"
+	// "bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -30,9 +32,61 @@ func main() {
 
 	runCommand(cmd, args)
 
+	modifyContentOfTailwindConfigForViteReact()
 
-	
+	modifyIndexCSS()
 
+	printInMagenta("\nTailwind Successfully Installed!\n")
+
+
+}
+
+func modifyContentOfTailwindConfigForViteReact() {
+
+	printInCyan("\nModifying content of tailwind.config.js...")
+
+	content, err := ioutil.ReadFile("tailwind.config.js")
+	if err != nil {
+		panic(err)
+	}
+
+	contentStr := string(content)
+
+	index := strings.Index(contentStr, "content: []")
+	if index == -1 {
+		return;
+	}
+
+	newContentStr := contentStr[:index] + `content: [
+		"./index.html",
+		"./src/**/*.{js,ts,jsx,tsx}",
+	]` + contentStr[index+len("content: []"):]
+
+	err = ioutil.WriteFile("tailwind.config.js", []byte(newContentStr), 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	printInGreen("\ntailwind.config.js modified successfully.")
+	return;
+}
+
+func modifyIndexCSS() {
+
+	printInCyan("\nModifying content of index.css ...")
+
+	newContentStr := 
+	`@tailwind base;
+@tailwind components;
+@tailwind utilities;`
+
+	err := ioutil.WriteFile("./src/index.css", []byte(newContentStr), 0644)
+	if err != nil {
+		panic(err)
+	}
+
+	printInGreen("\nindex.css modified successfully.")
+	return;
 }
 
 func runCommand(command string, args []string) string {
