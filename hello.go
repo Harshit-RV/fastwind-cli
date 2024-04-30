@@ -1,26 +1,79 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-    "os"
-    "path/filepath"
-    "io/ioutil"
-    "encoding/json"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
 )
 
 func main() {
+
+	if (checkingForViteReactProject()) {
+		fmt.Println("\nThis appears to be a React project.")
+	} else {
+		printInRed("\nThis is not a React (Vite) project.")
+		return;
+	}
+
+	// npm install -D tailwindcss postcss autoprefixer
+	cmd := "npm"
+	args := []string{"install", "-D", "tailwindcss", "postcss", "autoprefixer"}
+
+	runCommand(cmd, args)
+	
+	// npx tailwindcss init -p
+	cmd = "npx"
+	args = []string{"tailwindcss", "init", "-p"}
+
+	runCommand(cmd, args)
+
+
+	
+
+}
+
+func runCommand(command string, args []string) string {
+	// Create command object
+	cmd := exec.Command(command, args...)
+
+	printInCyan("\nRunning command:", command+" "+filepath.Join(args...))
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		printInCyan("Error executing command:", err)
+		return ""
+	}
+	fmt.Println("\nCommand output:", string(output))
+	printInGreen("Command executed successfully.")
+	return string(output)
+}
+
+func checkingForViteReactProject() (bool) {
+	printInYellow("\nChecking for React project...")
+
 	wd, err := os.Getwd()
 	if err != nil {
-		fmt.Println("Error:", err)
-		return
+		printInRed("Error:", err)
+		return false;
 	}
 
 	// Check if package.json exists
 	packageJSONPath := filepath.Join(wd, "package.json")
 	_, err = os.Stat(packageJSONPath)
 	if os.IsNotExist(err) {
-		fmt.Println("Error: Not a Node.js project (package.json not found)")
-		return
+		printInRed("\nError: Not a Node.js project (package.json not found)")
+		return false;
+	}
+
+	// Check if vite.config.js exists
+	viteConfigPath := filepath.Join(wd, "vite.config.js")
+	_, err = os.Stat(viteConfigPath)
+	if os.IsNotExist(err) {
+		printInRed("\nError: Not a Vite project (vite.config.js not found)")
+		return false
 	}
 
 	// checking for React dependencies
@@ -28,26 +81,41 @@ func main() {
 	reactDependencies := []string{"react", "react-dom"}
 	doesHaveDependencies, err := hasDependencies(packageJSONPath, reactDependencies)
 	if err != nil {
-		fmt.Println("Error:", err)
-		return
+		printInRed("\nError:", err)
+		return false;
 	}
 
-	if doesHaveDependencies {
-		fmt.Println("This appears to be a React project.")
-	} else {
-		fmt.Println("Error: Not a React project (React dependencies not found)")
-		return
+	if !doesHaveDependencies {
+		printInRed("\nError: Not a React project (React dependencies not found)")
+		return false
 	}
 
 	// checking for src directory
 	srcDir := filepath.Join(wd, "src")
 	_, err = os.Stat(srcDir)
 	if os.IsNotExist(err) {
-		fmt.Println("Error: Not a React project (src directory not found)")
-		return
+		printInRed("\nError: Not a React project (src directory not found)")
+		return false;
 	}
 
-	fmt.Println("This appears to be a React project.")
+	return true
+}
+
+func doesTailwindConfigExist() (bool) {
+	wd, err := os.Getwd()
+	if err != nil {
+		printInRed("Error:", err)
+		return false;
+	}
+
+	// Check if package.json exists
+	packageJSONPath := filepath.Join(wd, "tailwind.config.js")
+	_, err = os.Stat(packageJSONPath)
+	if os.IsNotExist(err) {
+		return false;
+	}
+
+	return true
 }
 
 func hasDependencies(packageJSONPath string, dependencies []string) (bool, error) {
@@ -55,8 +123,6 @@ func hasDependencies(packageJSONPath string, dependencies []string) (bool, error
 	if err != nil {
 		return false, err
 	}
-
-	fmt.Println(string(file))
 
 	var packageJSON struct {
 		Dependencies   map[string]string `json:"dependencies"`
@@ -78,4 +144,62 @@ func hasDependencies(packageJSONPath string, dependencies []string) (bool, error
 	}
 
 	return false, nil
+}
+
+const (
+    reset   = "\033[0m"
+    red     = "\033[31m"
+    green   = "\033[32m"
+    yellow  = "\033[33m"
+    blue    = "\033[34m"
+    magenta = "\033[35m"
+    cyan    = "\033[36m"
+)
+
+func printInYellow(args ...interface{}) {
+    var concatenatedString string
+    for _, arg := range args {
+        concatenatedString += fmt.Sprintf("%v ", arg)
+    }
+    fmt.Println(yellow + concatenatedString + reset)
+}
+
+func printInRed(args ...interface{}) {
+    var concatenatedString string
+    for _, arg := range args {
+        concatenatedString += fmt.Sprintf("%v ", arg)
+    }
+    fmt.Println(red + concatenatedString + reset)
+}
+
+func printInGreen(args ...interface{}) {
+    var concatenatedString string
+    for _, arg := range args {
+        concatenatedString += fmt.Sprintf("%v ", arg)
+    }
+    fmt.Println(green + concatenatedString + reset)
+}
+
+func printInBlue(args ...interface{}) {
+    var concatenatedString string
+    for _, arg := range args {
+        concatenatedString += fmt.Sprintf("%v ", arg)
+    }
+    fmt.Println(blue + concatenatedString + reset)
+}
+
+func printInMagenta(args ...interface{}) {
+    var concatenatedString string
+    for _, arg := range args {
+        concatenatedString += fmt.Sprintf("%v ", arg)
+    }
+    fmt.Println(magenta + concatenatedString + reset)
+}
+
+func printInCyan(args ...interface{}) {
+    var concatenatedString string
+    for _, arg := range args {
+        concatenatedString += fmt.Sprintf("%v ", arg)
+    }
+    fmt.Println(cyan + concatenatedString + reset)
 }
