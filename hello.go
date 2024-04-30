@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-	// Get the current working directory
 	wd, err := os.Getwd()
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -24,19 +23,23 @@ func main() {
 		return
 	}
 
-	// Optionally, you can check for React dependencies
+	// checking for React dependencies
 	// (Assuming "dependencies" and "devDependencies" fields in package.json)
 	reactDependencies := []string{"react", "react-dom"}
-	// if !hasDependencies(packageJSONPath, reactDependencies) {
-	// 	fmt.Println("Error: Not a React project (React dependencies not found)")
-	// 	return
-	// }
-	if _, err := hasDependencies(packageJSONPath, reactDependencies); err != nil {
+	doesHaveDependencies, err := hasDependencies(packageJSONPath, reactDependencies)
+	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 
-	// Optionally, you can check for src directory
+	if doesHaveDependencies {
+		fmt.Println("This appears to be a React project.")
+	} else {
+		fmt.Println("Error: Not a React project (React dependencies not found)")
+		return
+	}
+
+	// checking for src directory
 	srcDir := filepath.Join(wd, "src")
 	_, err = os.Stat(srcDir)
 	if os.IsNotExist(err) {
@@ -44,11 +47,9 @@ func main() {
 		return
 	}
 
-	// If all checks pass, it's a React project
 	fmt.Println("This appears to be a React project.")
 }
 
-// Function to check if a package.json file contains certain dependencies
 func hasDependencies(packageJSONPath string, dependencies []string) (bool, error) {
 	file, err := ioutil.ReadFile(packageJSONPath)
 	if err != nil {
@@ -76,6 +77,5 @@ func hasDependencies(packageJSONPath string, dependencies []string) (bool, error
 		}
 	}
 
-	// None of the dependencies were found
 	return false, nil
 }
